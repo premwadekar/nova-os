@@ -11,10 +11,12 @@ LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
 BUILD_DIR = build
 ISO_DIR   = iso
 
-BOOT_OBJ   = $(BUILD_DIR)/boot.o
-KERNEL_OBJ = $(BUILD_DIR)/kernel.o
-KERNEL_BIN = $(BUILD_DIR)/nova.bin
-ISO_FILE   = $(BUILD_DIR)/nova.iso
+BOOT_OBJ       = $(BUILD_DIR)/boot.o
+KERNEL_OBJ     = $(BUILD_DIR)/kernel.o
+GDT_OBJ        = $(BUILD_DIR)/gdt.o
+GDT_FLUSH_OBJ  = $(BUILD_DIR)/gdt_flush.o
+KERNEL_BIN     = $(BUILD_DIR)/nova.bin
+ISO_FILE       = $(BUILD_DIR)/nova.iso
 
 .PHONY: all iso run clean
 
@@ -29,8 +31,14 @@ $(BOOT_OBJ): boot/boot.s | $(BUILD_DIR)
 $(KERNEL_OBJ): kernel/kernel.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c kernel/kernel.c -o $(KERNEL_OBJ)
 
-$(KERNEL_BIN): $(BOOT_OBJ) $(KERNEL_OBJ) linker.ld
-	$(LD) -T linker.ld -o $(KERNEL_BIN) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ)
+$(GDT_OBJ): kernel/arch/gdt.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c kernel/arch/gdt.c -o $(GDT_OBJ)
+
+$(GDT_FLUSH_OBJ): kernel/arch/gdt_flush.s | $(BUILD_DIR)
+	$(AS) -f elf32 kernel/arch/gdt_flush.s -o $(GDT_FLUSH_OBJ)
+
+$(KERNEL_BIN): $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) linker.ld
+	$(LD) -T linker.ld -o $(KERNEL_BIN) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ)
 
 iso: $(KERNEL_BIN)
 	mkdir -p $(ISO_DIR)/boot/grub
