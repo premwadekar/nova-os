@@ -1,8 +1,9 @@
-/* kernel.c -- NOVA OS kernel entry (Day 2: GDT + IDT + ISR added) */
+/* kernel.c -- NOVA OS kernel entry (Day 2: GDT + IDT + ISR + IRQ added) */
 
 #include "arch/gdt.h"
 #include "arch/idt.h"
 #include "arch/isr.h"
+#include "arch/irq.h"
 
 /* VGA text mode buffer starts here */
 #define VGA_MEMORY ((unsigned char*)0xB8000)
@@ -41,6 +42,14 @@ void kernel_main(void) {
     /* ISR handlers install karo - CPU exceptions (0-31) ke liye */
     isrs_install();
     print_string("ISR handlers installed successfully.", current_row++);
+
+    /* IRQ handlers install karo - PIC remap + hardware interrupts (32-47) ke liye */
+    irq_install();
+    print_string("IRQ (PIC) installed successfully.", current_row++);
+
+    /* Interrupts ko globally enable karo -- ab tak CPU interrupts ignore kar raha tha */
+    __asm__ __volatile__("sti");
+    print_string("Interrupts enabled.", current_row++);
 
     while (1) {
         /* Kernel yahan infinite loop mein rahega for now */

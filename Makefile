@@ -19,6 +19,8 @@ IDT_OBJ         = $(BUILD_DIR)/idt.o
 IDT_FLUSH_OBJ   = $(BUILD_DIR)/idt_flush.o
 ISR_OBJ         = $(BUILD_DIR)/isr.o
 ISR_STUBS_OBJ   = $(BUILD_DIR)/isr_stubs.o
+IRQ_OBJ         = $(BUILD_DIR)/irq.o
+IRQ_STUBS_OBJ   = $(BUILD_DIR)/irq_stubs.o
 KERNEL_BIN      = $(BUILD_DIR)/nova.bin
 ISO_FILE        = $(BUILD_DIR)/nova.iso
 
@@ -53,8 +55,14 @@ $(ISR_OBJ): kernel/arch/isr.c | $(BUILD_DIR)
 $(ISR_STUBS_OBJ): kernel/arch/isr_stubs.s | $(BUILD_DIR)
 	$(AS) -f elf32 kernel/arch/isr_stubs.s -o $(ISR_STUBS_OBJ)
 
-$(KERNEL_BIN): $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ) linker.ld
-	$(LD) -T linker.ld -o $(KERNEL_BIN) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ)
+$(IRQ_OBJ): kernel/arch/irq.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c kernel/arch/irq.c -o $(IRQ_OBJ)
+
+$(IRQ_STUBS_OBJ): kernel/arch/irq_stubs.s | $(BUILD_DIR)
+	$(AS) -f elf32 kernel/arch/irq_stubs.s -o $(IRQ_STUBS_OBJ)
+
+$(KERNEL_BIN): $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ) $(IRQ_OBJ) $(IRQ_STUBS_OBJ) linker.ld
+	$(LD) -T linker.ld -o $(KERNEL_BIN) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ) $(IRQ_OBJ) $(IRQ_STUBS_OBJ)
 
 iso: $(KERNEL_BIN)
 	mkdir -p $(ISO_DIR)/boot/grub

@@ -17,4 +17,7 @@ void isrs_install(void);
 /* Common C handler -- saare ISR stubs isse call karte hain */
 void isr_handler(registers_t *regs);
 
+/* Common C handler -- saare IRQ stubs isse call karte hain (irq.c mein defined) */
+void irq_handler(registers_t *regs);
+
 #endif
