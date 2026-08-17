@@ -1,6 +1,8 @@
-/* kernel.c -- NOVA OS kernel entry (Day 2: GDT added) */
+/* kernel.c -- NOVA OS kernel entry (Day 2: GDT + IDT + ISR added) */
 
 #include "arch/gdt.h"
+#include "arch/idt.h"
+#include "arch/isr.h"
 
 /* VGA text mode buffer starts here */
 #define VGA_MEMORY ((unsigned char*)0xB8000)
@@ -19,8 +21,8 @@ void print_string(const char *msg, int row) {
     int i = 0;
     while (msg[i] != '\0') {
         int offset = (row * VGA_WIDTH + i) * 2;
-        vga[offset]     = msg[i];           /* character byte */
-        vga[offset + 1] = COLOR_DEFAULT;    /* color byte */
+        vga[offset]     = msg[i];       /* character byte */
+        vga[offset + 1] = COLOR_DEFAULT; /* color byte */
         i++;
     }
 }
@@ -30,8 +32,15 @@ void kernel_main(void) {
 
     /* GDT install karo - CPU ab humare custom GDT pe chalega */
     gdt_install();
-
     print_string("GDT loaded successfully.", current_row++);
+
+    /* IDT install karo - interrupt table zero se initialize hoti hai */
+    idt_install();
+    print_string("IDT loaded successfully.", current_row++);
+
+    /* ISR handlers install karo - CPU exceptions (0-31) ke liye */
+    isrs_install();
+    print_string("ISR handlers installed successfully.", current_row++);
 
     while (1) {
         /* Kernel yahan infinite loop mein rahega for now */

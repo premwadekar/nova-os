@@ -11,12 +11,16 @@ LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
 BUILD_DIR = build
 ISO_DIR   = iso
 
-BOOT_OBJ       = $(BUILD_DIR)/boot.o
-KERNEL_OBJ     = $(BUILD_DIR)/kernel.o
-GDT_OBJ        = $(BUILD_DIR)/gdt.o
-GDT_FLUSH_OBJ  = $(BUILD_DIR)/gdt_flush.o
-KERNEL_BIN     = $(BUILD_DIR)/nova.bin
-ISO_FILE       = $(BUILD_DIR)/nova.iso
+BOOT_OBJ        = $(BUILD_DIR)/boot.o
+KERNEL_OBJ      = $(BUILD_DIR)/kernel.o
+GDT_OBJ         = $(BUILD_DIR)/gdt.o
+GDT_FLUSH_OBJ   = $(BUILD_DIR)/gdt_flush.o
+IDT_OBJ         = $(BUILD_DIR)/idt.o
+IDT_FLUSH_OBJ   = $(BUILD_DIR)/idt_flush.o
+ISR_OBJ         = $(BUILD_DIR)/isr.o
+ISR_STUBS_OBJ   = $(BUILD_DIR)/isr_stubs.o
+KERNEL_BIN      = $(BUILD_DIR)/nova.bin
+ISO_FILE        = $(BUILD_DIR)/nova.iso
 
 .PHONY: all iso run clean
 
@@ -37,8 +41,20 @@ $(GDT_OBJ): kernel/arch/gdt.c | $(BUILD_DIR)
 $(GDT_FLUSH_OBJ): kernel/arch/gdt_flush.s | $(BUILD_DIR)
 	$(AS) -f elf32 kernel/arch/gdt_flush.s -o $(GDT_FLUSH_OBJ)
 
-$(KERNEL_BIN): $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) linker.ld
-	$(LD) -T linker.ld -o $(KERNEL_BIN) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ)
+$(IDT_OBJ): kernel/arch/idt.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c kernel/arch/idt.c -o $(IDT_OBJ)
+
+$(IDT_FLUSH_OBJ): kernel/arch/idt_flush.s | $(BUILD_DIR)
+	$(AS) -f elf32 kernel/arch/idt_flush.s -o $(IDT_FLUSH_OBJ)
+
+$(ISR_OBJ): kernel/arch/isr.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c kernel/arch/isr.c -o $(ISR_OBJ)
+
+$(ISR_STUBS_OBJ): kernel/arch/isr_stubs.s | $(BUILD_DIR)
+	$(AS) -f elf32 kernel/arch/isr_stubs.s -o $(ISR_STUBS_OBJ)
+
+$(KERNEL_BIN): $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ) linker.ld
+	$(LD) -T linker.ld -o $(KERNEL_BIN) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ)
 
 iso: $(KERNEL_BIN)
 	mkdir -p $(ISO_DIR)/boot/grub
