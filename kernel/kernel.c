@@ -1,9 +1,10 @@
-/* kernel.c -- NOVA OS kernel entry (Day 2: GDT + IDT + ISR + IRQ added) */
+/* kernel.c -- NOVA OS kernel entry (Day 2: GDT + IDT + ISR + IRQ + Keyboard added) */
 
 #include "arch/gdt.h"
 #include "arch/idt.h"
 #include "arch/isr.h"
 #include "arch/irq.h"
+#include "drivers/keyboard.h"
 
 /* VGA text mode buffer starts here */
 #define VGA_MEMORY ((unsigned char*)0xB8000)
@@ -47,11 +48,15 @@ void kernel_main(void) {
     irq_install();
     print_string("IRQ (PIC) installed successfully.", current_row++);
 
+    /* Keyboard driver install karo - IRQ1 ke liye handler register karta hai */
+    keyboard_install();
+    print_string("Keyboard driver installed successfully.", current_row++);
+
     /* Interrupts ko globally enable karo -- ab tak CPU interrupts ignore kar raha tha */
     __asm__ __volatile__("sti");
-    print_string("Interrupts enabled.", current_row++);
+    print_string("Interrupts enabled. Try typing on your keyboard!", current_row++);
 
     while (1) {
-        /* Kernel yahan infinite loop mein rahega for now */
+        /* Kernel yahan infinite loop mein rahega, ab keyboard interrupts handle honge */
     }
 }

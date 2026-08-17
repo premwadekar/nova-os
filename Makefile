@@ -21,6 +21,7 @@ ISR_OBJ         = $(BUILD_DIR)/isr.o
 ISR_STUBS_OBJ   = $(BUILD_DIR)/isr_stubs.o
 IRQ_OBJ         = $(BUILD_DIR)/irq.o
 IRQ_STUBS_OBJ   = $(BUILD_DIR)/irq_stubs.o
+KEYBOARD_OBJ    = $(BUILD_DIR)/keyboard.o
 KERNEL_BIN      = $(BUILD_DIR)/nova.bin
 ISO_FILE        = $(BUILD_DIR)/nova.iso
 
@@ -61,8 +62,11 @@ $(IRQ_OBJ): kernel/arch/irq.c | $(BUILD_DIR)
 $(IRQ_STUBS_OBJ): kernel/arch/irq_stubs.s | $(BUILD_DIR)
 	$(AS) -f elf32 kernel/arch/irq_stubs.s -o $(IRQ_STUBS_OBJ)
 
-$(KERNEL_BIN): $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ) $(IRQ_OBJ) $(IRQ_STUBS_OBJ) linker.ld
-	$(LD) -T linker.ld -o $(KERNEL_BIN) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ) $(IRQ_OBJ) $(IRQ_STUBS_OBJ)
+$(KEYBOARD_OBJ): kernel/drivers/keyboard.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c kernel/drivers/keyboard.c -o $(KEYBOARD_OBJ)
+
+$(KERNEL_BIN): $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ) $(IRQ_OBJ) $(IRQ_STUBS_OBJ) $(KEYBOARD_OBJ) linker.ld
+	$(LD) -T linker.ld -o $(KERNEL_BIN) $(LDFLAGS) $(BOOT_OBJ) $(KERNEL_OBJ) $(GDT_OBJ) $(GDT_FLUSH_OBJ) $(IDT_OBJ) $(IDT_FLUSH_OBJ) $(ISR_OBJ) $(ISR_STUBS_OBJ) $(IRQ_OBJ) $(IRQ_STUBS_OBJ) $(KEYBOARD_OBJ)
 
 iso: $(KERNEL_BIN)
 	mkdir -p $(ISO_DIR)/boot/grub
